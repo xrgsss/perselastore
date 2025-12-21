@@ -1,43 +1,56 @@
-<!DOCTYPE html>
-<html lang="id">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Persela Store | Beranda</title>
-  <link rel="stylesheet" href="{{ asset('style.css') }}">
-  <script src="{{ asset('script.js') }}" defer></script>
-</head>
-<body>
-  <header class="navbar">
-    <div class="logo">Persela Store</div>
-    <nav>
-      <a href="{{ route('frontend.home') }}" class="{{ request()->routeIs('frontend.home') ? 'active' : '' }}">Beranda</a>
-      <a href="{{ route('frontend.produk') }}" class="{{ request()->routeIs('frontend.produk') ? 'active' : '' }}">Produk</a>
-      <a href="{{ route('frontend.cart') }}" class="{{ request()->routeIs('frontend.cart') ? 'active' : '' }}">Keranjang</a>
-      <a href="{{ route('frontend.kontak') }}" class="{{ request()->routeIs('frontend.kontak') ? 'active' : '' }}">Kontak</a>
-      <a href="{{ route('frontend.bantuan') }}" class="{{ request()->routeIs('frontend.bantuan') ? 'active' : '' }}">Bantuan</a>
-      <a href="{{ route('frontend.tentang') }}" class="{{ request()->routeIs('frontend.tentang') ? 'active' : '' }}">Tentang</a>
-    </nav>
-  </header>
+@extends('layouts.app')
 
-  <section class="hero">
-    <div class="hero-text">
-      <h1>Selamat Datang di Persela Store</h1>
-      <p>Dukung Laskar Joko Tingkir dengan koleksi jersey resmi Persela Lamongan.</p>
-      <a href="{{ route('frontend.produk') }}" class="btn-primary">Lihat Semua Produk</a>
+@section('title', 'Beranda')
+
+@section('content')
+
+<section class="flex flex-col md:flex-row items-center justify-between bg-gray-900 text-white p-10 rounded-lg">
+    <div class="max-w-xl">
+        <h1 class="text-4xl font-bold mb-4">
+            Selamat Datang di Persela Store
+        </h1>
+        <p class="mb-6 text-gray-300">
+            Dukung Laskar Joko Tingkir dengan koleksi jersey resmi Persela Lamongan.
+        </p>
+        <a href="{{ route('frontend.produk') }}"
+           class="inline-block bg-blue-600 hover:bg-blue-700 px-6 py-3 rounded font-semibold">
+            Lihat Semua Produk
+        </a>
     </div>
-    <div class="hero-image">
-      <img src="https://down-id.img.susercontent.com/file/id-11134207-7r98o-lkuvtj32elncb8@resize_w900_nl.webp" alt="Jersey Home Persela">
+
+    <div class="mt-8 md:mt-0">
+        <img
+            src="https://down-id.img.susercontent.com/file/id-11134207-7r98o-lkuvtj32elncb8@resize_w900_nl.webp"
+            alt="Jersey Persela"
+            class="w-80 rounded shadow-lg"
+        >
     </div>
-  </section>
+</section>
 
-  <section class="produk-section">
-    <h2>Produk Unggulan</h2>
-    <div id="unggulan-container" class="produk-container"></div>
-  </section>
+<section class="mt-12">
+    <h2 class="text-2xl font-bold text-center mb-6">
+        Produk Unggulan
+    </h2>
 
-  <footer>
-    <p>(c) 2025 Persela Store. All rights reserved.</p>
-  </footer>
-</body>
-</html>
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div class="bg-white rounded shadow p-4 text-center">
+            <img src="https://down-id.img.susercontent.com/file/id-11134207-7r98o-lkuvtj32elncb8@resize_w300_nl.webp"
+                 class="mx-auto mb-4 rounded">
+            <h3 class="font-semibold">Jersey Home</h3>
+        </div>
+
+        <div class="bg-white rounded shadow p-4 text-center">
+            <img src="https://down-id.img.susercontent.com/file/id-11134207-7r98o-lkuvtj32elncb8@resize_w300_nl.webp"
+                 class="mx-auto mb-4 rounded">
+            <h3 class="font-semibold">Jersey Away</h3>
+        </div>
+
+        <div class="bg-white rounded shadow p-4 text-center">
+            <img src="https://down-id.img.susercontent.com/file/id-11134207-7r98o-lkuvtj32elncb8@resize_w300_nl.webp"
+                 class="mx-auto mb-4 rounded">
+            <h3 class="font-semibold">Jersey Training</h3>
+        </div>
+    </div>
+</section>
+
+@endsection
