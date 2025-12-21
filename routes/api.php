@@ -1,7 +1,6 @@
 <?php
 
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Route; // <<< WAJIB
+use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\JerseyController;
 
@@ -11,10 +10,12 @@ use App\Http\Controllers\JerseyController;
 |--------------------------------------------------------------------------
 */
 
+// AUTH
 Route::post('/register', [AuthController::class, 'register']);
 Route::post('/login', [AuthController::class, 'login']);
 
-Route::middleware('auth:sanctum')->group(function () {
+// PROTECTED (JWT)
+Route::middleware('jwt.auth')->group(function () {
     Route::get('/me', [AuthController::class, 'me']);
     Route::post('/logout', [AuthController::class, 'logout']);
 
@@ -23,5 +24,6 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::delete('/jerseys/{id}', [JerseyController::class, 'destroy']);
 });
 
+// PUBLIC
 Route::get('/jerseys', [JerseyController::class, 'index']);
 Route::get('/jerseys/{id}', [JerseyController::class, 'show']);

@@ -15,44 +15,38 @@ class JerseyController extends Controller
         $sortBy = strtolower($request->query('sortBy', 'asc')) === 'desc' ? 'desc' : 'asc';
         $search = trim((string) $request->query('search', ''));
 
-        $allowedOrderColumns = ['id', 'nama', 'kategori', 'harga', 'stok', 'ukuran', 'created_at', 'updated_at'];
-        if (!in_array($orderBy, $allowedOrderColumns, true)) {
+        $allowed = ['id','nama','kategori','harga','stok','ukuran','created_at','updated_at'];
+        if (!in_array($orderBy, $allowed)) {
             $orderBy = 'id';
         }
 
         $query = Jersey::query();
 
         if ($search !== '') {
-            $query->where(function ($q) use ($search) {
-                $q->where('nama', 'like', "%{$search}%")
-                  ->orWhere('kategori', 'like', "%{$search}%");
-            });
+            $query->where('nama', 'like', "%$search%")
+                  ->orWhere('kategori', 'like', "%$search%");
         }
 
-        $paginator = $query
-            ->orderBy($orderBy, $sortBy)
-            ->paginate($limit);
+        $data = $query->orderBy($orderBy, $sortBy)->paginate($limit);
 
         return response()->json([
             'status' => 'success',
-            'page' => $paginator->currentPage(),
-            'limit' => $paginator->perPage(),
-            'total' => $paginator->total(),
-            'data' => $paginator->items(),
+            'data' => $data->items(),
+            'total' => $data->total(),
+            'page' => $data->currentPage()
         ]);
     }
 
-    // GET DETAIL
+    // DETAIL
     public function show($id)
     {
-        $jersey = Jersey::findOrFail($id);
-        return response()->json($jersey);
+        return response()->json(Jersey::findOrFail($id));
     }
 
     // CREATE
     public function store(Request $request)
     {
-        $validated = $request->validate([
+        $data = $request->validate([
             'nama'      => 'required|string',
             'kategori'  => 'required|string',
             'harga'     => 'required|integer',
@@ -62,21 +56,9 @@ class JerseyController extends Controller
             'gambar'    => 'nullable',
         ]);
 
-        if ($request->hasFile('gambar')) {
-            $request->validate(['gambar' => 'image|max:5120']);
-            $file = $request->file('gambar');
-            $filename = time().'_'.$file->getClientOriginalName();
-            $file->storeAs('public/jerseys', $filename);
-            $validated['gambar'] = $filename;
-        } elseif ($request->filled('gambar')) {
-            $validated['gambar'] = (string) $request->input('gambar');
-        }
+        Jersey::create($data);
 
-        Jersey::create($validated);
-
-        return response()->json([
-            'message' => 'Jersey berhasil ditambahkan'
-        ], 201);
+        return response()->json(['message' => 'Jersey berhasil ditambahkan'], 201);
     }
 
     // UPDATE
@@ -85,39 +67,24 @@ class JerseyController extends Controller
         $jersey = Jersey::findOrFail($id);
 
         $data = $request->validate([
-            'nama'      => 'sometimes|required|string',
-            'kategori'  => 'sometimes|required|string',
-            'harga'     => 'sometimes|required|integer',
-            'stok'      => 'sometimes|required|integer',
-            'ukuran'    => 'sometimes|required|string',
+            'nama'      => 'sometimes|string',
+            'kategori'  => 'sometimes|string',
+            'harga'     => 'sometimes|integer',
+            'stok'      => 'sometimes|integer',
+            'ukuran'    => 'sometimes|string',
             'deskripsi' => 'nullable|string',
             'gambar'    => 'nullable',
         ]);
 
-        if ($request->hasFile('gambar')) {
-            $request->validate(['gambar' => 'image|max:5120']);
-            $file = $request->file('gambar');
-            $filename = time().'_'.$file->getClientOriginalName();
-            $file->storeAs('public/jerseys', $filename);
-            $data['gambar'] = $filename;
-        } elseif ($request->filled('gambar')) {
-            $data['gambar'] = (string) $request->input('gambar');
-        }
-
         $jersey->update($data);
 
-        return response()->json([
-            'message' => 'Jersey berhasil diperbarui'
-        ]);
+        return response()->json(['message' => 'Jersey berhasil diperbarui']);
     }
 
     // DELETE
     public function destroy($id)
     {
         Jersey::destroy($id);
-
-        return response()->json([
-            'message' => 'Jersey berhasil dihapus'
-        ]);
+        return response()->json(['message' => 'Jersey berhasil dihapus']);
     }
 }

@@ -11,16 +11,16 @@ class AuthController extends Controller
     // ================= REGISTER =================
     public function register(Request $request)
     {
-        $validated = $request->validate([
-            'name'     => 'required|string',
+        $request->validate([
+            'name'     => 'required|string|max:100',
             'email'    => 'required|email|unique:users',
             'password' => 'required|min:6',
         ]);
 
-        $user = User::create([
-            'name'     => $validated['name'],
-            'email'    => $validated['email'],
-            'password' => Hash::make($validated['password']),
+        User::create([
+            'name'     => $request->name,
+            'email'    => $request->email,
+            'password' => Hash::make($request->password),
         ]);
 
         return response()->json([
@@ -28,39 +28,35 @@ class AuthController extends Controller
         ], 201);
     }
 
-    // ================= LOGIN =================
+    // ================= LOGIN (JWT) =================
     public function login(Request $request)
     {
-        $request->validate([
-            'email'    => 'required|email',
-            'password' => 'required',
-        ]);
+        $credentials = $request->only('email', 'password');
 
-        if (!auth()->attempt($request->only('email', 'password'))) {
+        // JWT login
+        if (! $token = auth()->attempt($credentials)) {
             return response()->json([
-                'message' => 'Email atau password salah'
+                'message' => 'Unauthorized'
             ], 401);
         }
 
-        $user = auth()->user();
-        $token = $user->createToken('api-token')->plainTextToken;
-
         return response()->json([
-            'token' => $token,
-            'user'  => $user,
+            'access_token' => $token,
+            'token_type'   => 'bearer',
         ]);
     }
 
     // ================= ME =================
-    public function me(Request $request)
+    public function me()
     {
-        return response()->json($request->user());
+        // user diambil dari JWT middleware
+        return response()->json(auth()->user());
     }
 
     // ================= LOGOUT =================
-    public function logout(Request $request)
+    public function logout()
     {
-        $request->user()->currentAccessToken()->delete();
+        auth()->logout();
 
         return response()->json([
             'message' => 'Logout berhasil'
