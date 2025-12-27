@@ -259,6 +259,12 @@ const profileIcon = document.getElementById('profileIcon');
 
 const authButtons = document.getElementById('authButtons');
 
+function clearStaleAuth() {
+    if (window.location.pathname === '/login') {
+        ['token','bearerToken','isAdmin','userEmail','userName','isLogin'].forEach(k => localStorage.removeItem(k));
+    }
+}
+
 function renderAuthNav() {
     if (!authButtons) return;
     const tokenRaw = localStorage.getItem('token');
@@ -284,6 +290,7 @@ function renderAuthNav() {
     }
 }
 
+clearStaleAuth();
 renderAuthNav();
 window.addEventListener('storage', renderAuthNav);
 
