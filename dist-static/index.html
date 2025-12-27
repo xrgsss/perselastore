@@ -100,7 +100,7 @@
 
 <!-- CONTENT -->
 <main class="max-w-7xl mx-auto px-6 py-10">
-    <section class="relative overflow-hidden rounded-3xl p-6 md:p-10 border border-white/5 min-h-[80vh] flex items-center mt-6"
+    <section class="hero-banner relative overflow-hidden rounded-3xl p-6 md:p-10 border border-white/5 min-h-[80vh] flex items-center mt-6"
          style="max-width: 1300px; margin: 0 auto;">
   <video class="absolute inset-0 w-full h-full object-cover" autoplay loop muted playsinline>
     <source src="/hero.mp4" type="video/mp4">
@@ -451,6 +451,37 @@ nextBtn?.addEventListener('click', () => scrollSlider(1));
 [data-animate].show {
   opacity: 1;
   transform: translateY(0);
+}
+
+/* mobile tweaks */
+@media (max-width: 768px) {
+  nav .max-w-7xl {
+    flex-wrap: wrap;
+    gap: 12px;
+    padding-left: 1rem;
+    padding-right: 1rem;
+  }
+  nav .flex-1.flex.justify-center {
+    width: 100%;
+    order: 3;
+    justify-content: center;
+  }
+  nav #authMenu {
+    order: 2;
+    margin-left: auto;
+  }
+  nav .flex.items-center.gap-3.text-white {
+    order: 2;
+    margin-left: auto;
+  }
+  .hero-banner {
+    max-width: none !important;
+    margin-left: -1rem;
+    margin-right: -1rem;
+    border-radius: 0;
+    padding: 1.5rem 1rem;
+    min-height: 70vh;
+  }
 }
 </style>
 
