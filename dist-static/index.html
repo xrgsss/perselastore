@@ -51,7 +51,15 @@
         .logo-wrap{
             display:flex;
             align-items:center;
-            height:48px;
+            height:40px;
+        }
+        .logo-wrap img{
+            height:40px;
+            width:auto;
+            object-fit:contain;
+        }
+        .hero-banner video{
+            border-radius: inherit;
         }
     </style>
 </head>
@@ -550,10 +558,10 @@ nextBtn?.addEventListener('click', () => scrollSlider(1));
   }
   .hero-banner {
     max-width: none !important;
-    margin-left: -1rem;
-    margin-right: -1rem;
-    border-radius: 0;
-    padding: 1.5rem 1rem;
+    margin-left: 0;
+    margin-right: 0;
+    border-radius: 20px;
+    padding: 1.25rem 1rem;
     min-height: 70vh;
   }
   #authButtons {
