@@ -208,33 +208,15 @@ function authHeaders() {
 }
 
 async function ensureAdmin() {
-    const bearer = localStorage.getItem('bearerToken');
-
-    if (!token && !bearer) {
-        location.href = '/login';
-        return false;
-    }
-
-    try {
-        const res = await fetch('/api/me', { headers: authHeaders() });
-        if (!res.ok) throw new Error('unauthorized');
-        const user = await res.json();
-        const email = (user.email || '').toLowerCase();
-        const isAdmin = (user.is_admin === true || user.is_admin === 1 || user.is_admin === '1') && email === ADMIN_EMAIL;
-        if (!isAdmin) {
-            alert('Hanya admin yang dapat mengakses dashboard.');
-            location.href = '/';
-            return false;
-        }
-        statusEl.textContent = `Login sebagai ${user.email}`;
-        return true;
-    } catch (e) {
-        localStorage.removeItem('token');
-        localStorage.removeItem('bearerToken');
+    const email = (localStorage.getItem('userEmail') || '').toLowerCase();
+    if (email !== ADMIN_EMAIL) {
+        alert('Hanya admin yang dapat mengakses dashboard.');
         localStorage.removeItem('isAdmin');
-        location.href = '/login';
+        location.href = '/';
         return false;
     }
+    statusEl.textContent = `Login sebagai ${email}`;
+    return true;
 }
 
 // LOAD DATA
