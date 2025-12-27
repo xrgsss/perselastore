@@ -4,8 +4,9 @@
     { "src": "dist-static/**/*", "use": "@vercel/static" }
   ],
   "routes": [
-    { "src": "/produk/(.+)", "dest": "/produk/detail/index.html" },
-    { "src": "/orders/(.+)", "dest": "/orders/detail/index.html" },
-    { "src": "/(.*)", "dest": "/$1" }
+    { "src": "/", "dest": "/dist-static/index.html" },
+    { "src": "/produk/(.+)", "dest": "/dist-static/produk/detail/index.html" },
+    { "src": "/orders/(.+)", "dest": "/dist-static/orders/detail/index.html" },
+    { "src": "/(.*)", "dest": "/dist-static/$1" }
   ]
 }
