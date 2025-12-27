@@ -226,7 +226,7 @@ function renderAuthNav() {
     const tokenRaw = localStorage.getItem('token');
     const bearerRaw = localStorage.getItem('bearerToken');
     const hasAuth = !!(tokenRaw || bearerRaw || localStorage.getItem('isLogin') === 'true');
-    const isAdmin = localStorage.getItem('isAdmin') === '1';
+    const isAdmin = localStorage.getItem('isAdmin') === '1' && (localStorage.getItem('userEmail') || '').toLowerCase() === 'admin@gmail.com';
 
     if (hasAuth) {
         authMenu.innerHTML = '';

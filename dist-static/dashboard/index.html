@@ -219,7 +219,8 @@ async function ensureAdmin() {
         const res = await fetch('/api/me', { headers: authHeaders() });
         if (!res.ok) throw new Error('unauthorized');
         const user = await res.json();
-        const isAdmin = user.is_admin === true || user.is_admin === 1 || user.is_admin === '1';
+        const email = (user.email || '').toLowerCase();
+        const isAdmin = (user.is_admin === true || user.is_admin === 1 || user.is_admin === '1') && email === ADMIN_EMAIL;
         if (!isAdmin) {
             alert('Hanya admin yang dapat mengakses dashboard.');
             location.href = '/';
@@ -517,6 +518,7 @@ const navSearchInput = document.getElementById('navSearchInput');
 const navSearchCancel = document.getElementById('navSearchCancel');
 const cartBadge = document.getElementById('cartBadge');
 const profileIcon = document.getElementById('profileIcon');
+const ADMIN_EMAIL = 'admin@gmail.com';
 
 const authButtons = document.getElementById('authButtons');
 
@@ -525,7 +527,7 @@ function renderAuthNav() {
     const tokenRaw = localStorage.getItem('token');
     const bearerRaw = localStorage.getItem('bearerToken');
     const hasAuth = !!(tokenRaw || bearerRaw || localStorage.getItem('isLogin') === 'true');
-    const isAdmin = localStorage.getItem('isAdmin') === '1';
+    const isAdmin = localStorage.getItem('isAdmin') === '1' && (localStorage.getItem('userEmail') || '').toLowerCase() === 'admin@gmail.com';
 
     if (hasAuth) {
         authMenu.innerHTML = '';
@@ -546,6 +548,17 @@ function renderAuthNav() {
 
 renderAuthNav();
 window.addEventListener('storage', renderAuthNav);
+
+// hard gate: hanya admin@gmail.com
+function enforceAdminEmail() {
+    const email = (localStorage.getItem('userEmail') || '').toLowerCase();
+    if (email !== ADMIN_EMAIL) {
+        alert('Hanya admin yang dapat mengakses dashboard.');
+        localStorage.removeItem('isAdmin');
+        location.href = '/';
+    }
+}
+enforceAdminEmail();
 
 // search prompt overlay
 navSearchBtn?.addEventListener('click', () => {

@@ -17,7 +17,10 @@
     style.id = 'globalMobileNavStyles';
     style.textContent = `
       @media (max-width: 768px) {
-        #authButtons { display: none; }
+        nav .flex-1 { display: none !important; }
+        nav .max-w-7xl { padding-left: 1rem; padding-right: 1rem; }
+        nav .flex.items-center.gap-3.text-white { margin-left: auto; }
+        #authButtons { display: none !important; }
       }
       #globalMobileMenu { z-index: 60; }
       #globalMobileMenu .drawer {
@@ -88,7 +91,8 @@
     const tokenRaw = localStorage.getItem('token');
     const bearerRaw = localStorage.getItem('bearerToken');
     const hasAuth = !!(tokenRaw || bearerRaw || localStorage.getItem('isLogin') === 'true');
-    const isAdmin = localStorage.getItem('isAdmin') === '1';
+    const email = (localStorage.getItem('userEmail') || '').toLowerCase();
+    const isAdmin = localStorage.getItem('isAdmin') === '1' && email === 'admin@gmail.com';
 
     if (hasAuth) {
       authEl.innerHTML = `
