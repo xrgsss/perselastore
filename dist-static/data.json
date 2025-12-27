@@ -1,0 +1,30 @@
+[
+  {
+    "id": 1,
+    "name": "Jersey Training Kit",
+    "price": 250000,
+    "image": "https://down-id.img.susercontent.com/file/id-11134207-7ra0h-mcoltxwj1rab40@resize_w900_nl.webp",
+    "description": "Jersey training Persela Lamongan, ringan dan nyaman dipakai latihan."
+  },
+  {
+    "id": 2,
+    "name": "Jersey Home",
+    "price": 300000,
+    "image": "https://down-id.img.susercontent.com/file/id-11134207-7r98o-lkuvtj32elncb8@resize_w900_nl.webp",
+    "description": "Jersey home resmi Persela Lamongan dengan warna kebanggaan biru."
+  },
+  {
+    "id": 3,
+    "name": "Jersey Away",
+    "price": 300000,
+    "image": "https://down-id.img.susercontent.com/file/id-11134207-7ras9-m0fcqpslytyvf3@resize_w900_nl.webp",
+    "description": "Jersey away Persela Lamongan, desain modern dan elegan."
+  },
+  {
+    "id": 4,
+    "name": "Jersey Kiper",
+    "price": 280000,
+    "image": "https://down-id.img.susercontent.com/file/id-11134207-7ra0q-mcoltxwjeeeb06@resize_w900_nl.webp",
+    "description": "Jersey kiper Persela Lamongan dengan bahan premium."
+  }
+]

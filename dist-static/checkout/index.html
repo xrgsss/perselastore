@@ -1,0 +1,451 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Checkout</title>
+
+    <!-- Tailwind CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <style>
+        :root {
+            --bg: radial-gradient(circle at top, #0f1b2d, #05080f);
+            --text: #ffffff;
+            --muted: rgba(255,255,255,0.7);
+            --surface: rgba(255,255,255,0.04);
+            --border: rgba(255,255,255,0.08);
+            --accent: #22d3ee;
+            --nav-grad: linear-gradient(90deg, rgba(10,18,32,0.95), rgba(10,19,36,0.8), rgba(8,16,32,0.95));
+        }
+        body {
+            background: var(--bg);
+            color: var(--text);
+            transition: background 0.3s ease, color 0.3s ease;
+            scroll-behavior: smooth;
+        }
+        .nav-link {
+            color: var(--text);
+            opacity: 0.82;
+            transition: color 0.2s ease, opacity 0.2s ease;
+        }
+        .nav-link:hover { color: var(--accent); opacity: 1; }
+        .cta-primary {
+            background: var(--accent);
+            color: #0b1224;
+        }
+        .cta-primary:hover { filter: brightness(1.05); }
+        .cta-ghost {
+            border-color: var(--border);
+            color: var(--text);
+        }
+        .cta-ghost:hover { border-color: var(--accent); color: var(--accent); }
+        .surface {
+            background: var(--surface);
+            border-color: var(--border);
+        }
+        .nav-surface {
+            background: var(--nav-grad);
+            border-color: var(--border);
+        }
+    </style>
+</head>
+<body class="text-white" data-theme="dark">
+
+<!-- NAVBAR -->
+<nav class="sticky top-0 z-50 nav-surface backdrop-blur border-b">
+    <div class="max-w-7xl mx-auto px-6 py-3 flex items-center gap-6">
+        <a href="/" class="flex items-center gap-3">
+            <div class="relative w-40 h-12 overflow-hidden">
+                <img src="/logo-dark.png" alt="Logo" class="w-full h-full object-contain logo-dark">
+                <img src="/logo-light.png" alt="Logo" class="w-full h-full object-contain hidden logo-light">
+            </div>
+        </a>
+
+        <div class="flex-1 flex justify-center">
+            <div class="flex items-center gap-6 text-sm font-semibold">
+                <a href="/" class="nav-link">Beranda</a>
+                <a href="/produk" class="nav-link">Produk</a>
+                <a href="/orders" class="nav-link">Riwayat</a>
+            </div>
+        </div>
+
+        <div class="flex items-center gap-3" id="authMenu"></div>
+
+        <div class="flex items-center gap-3 text-white">
+            <div class="relative">
+                <button id="navSearchBtn" title="Cari produk" class="p-2 rounded-full hover:bg-white/10">
+                    <img src="/icons/search.png" alt="search" class="w-5 h-5">
+                </button>
+                <div id="navSearchBar" class="hidden fixed left-1/2 -translate-x-1/2 top-20 bg-white/95 backdrop-blur text-black rounded-full px-4 py-2 flex items-center gap-3 shadow-2xl border border-black/5 w-[min(90%,640px)]">
+                    <img src="/icons/search.png" alt="search" class="w-5 h-5 opacity-70">
+                    <input id="navSearchInput" type="text" placeholder="Search" class="flex-1 outline-none bg-transparent text-base text-gray-700 placeholder-gray-400">
+                    <button id="navSearchCancel" class="text-sm text-blue-600 px-3 py-1 rounded-full hover:bg-blue-50">Cancel</button>
+                </div>
+            </div>
+            <a href="/favorites" title="Favorit" class="p-2 rounded-full hover:bg-white/10">
+                <img src="/icons/fav.png" alt="favorit" class="w-5 h-5">
+            </a>
+            <a href="/cart" title="Keranjang" class="relative p-2 rounded-full hover:bg-white/10">
+                <img src="/icons/cart.png" alt="cart" class="w-5 h-5">
+                <span id="cartBadge" class="hidden absolute -top-1 -right-1 text-xs px-1.5 py-0.5 rounded-full bg-cyan-500 text-black font-semibold"></span>
+            </a>
+            <a href="/profile" id="profileIcon" title="Profil" class="hidden p-2 rounded-full hover:bg-white/10">
+                <img src="/icons/profile.png" alt="profil" class="w-5 h-5">
+            </a>
+            <div id="authButtons" class="flex items-center gap-2"></div>
+        </div>
+    </div>
+</nav>
+
+<!-- CONTENT -->
+<main class="max-w-7xl mx-auto px-6 py-10">
+    <h1 class="text-3xl font-bold mb-6">Checkout</h1>
+
+<div class="grid md:grid-cols-3 gap-8">
+    <div class="md:col-span-2 space-y-4" id="checkout-items">
+        <!-- Items will be injected by script -->
+    </div>
+
+    <aside class="bg-white/5 p-6 rounded-2xl border border-white/10 space-y-4">
+        <div>
+            <p class="text-white/70 text-sm mb-2">Pilih metode pembayaran</p>
+            <div class="space-y-2" id="payment-list">
+                <label class="flex items-center gap-3 p-3 rounded-xl border border-white/10 hover:border-cyan-400/60 cursor-pointer">
+                    <input type="radio" name="paymethod" value="Virtual Account - BCA" class="accent-cyan-500">
+                    <div>
+                        <p class="font-semibold">Virtual Account</p>
+                        <p class="text-xs text-white/60">BCA / BRI / BNI otomatis terverifikasi</p>
+                    </div>
+                </label>
+                <label class="flex items-center gap-3 p-3 rounded-xl border border-white/10 hover:border-cyan-400/60 cursor-pointer">
+                    <input type="radio" name="paymethod" value="Debit Card" class="accent-cyan-500">
+                    <div>
+                        <p class="font-semibold">Kartu Debit</p>
+                        <p class="text-xs text-white/60">Visa / Mastercard</p>
+                    </div>
+                </label>
+                <label class="flex items-center gap-3 p-3 rounded-xl border border-white/10 hover:border-cyan-400/60 cursor-pointer">
+                    <input type="radio" name="paymethod" value="E-Wallet" class="accent-cyan-500">
+                    <div>
+                        <p class="font-semibold">E-Wallet</p>
+                        <p class="text-xs text-white/60">OVO, DANA, ShopeePay</p>
+                    </div>
+                </label>
+                <label class="flex items-center gap-3 p-3 rounded-xl border border-white/10 hover:border-cyan-400/60 cursor-pointer">
+                    <input type="radio" name="paymethod" value="QRIS" class="accent-cyan-500">
+                    <div>
+                        <p class="font-semibold">QRIS</p>
+                        <p class="text-xs text-white/60">Scan pakai aplikasi bank / ewallet</p>
+                    </div>
+                </label>
+            </div>
+            <div id="payment-note" class="text-xs text-white/60 mt-3"></div>
+        </div>
+
+        <div class="flex items-center justify-between text-sm text-white/70">
+            <span>Subtotal</span>
+            <span id="checkout-total">Rp 0</span>
+        </div>
+        <p class="text-white/60 text-sm">Pengiriman dan pajak dihitung saat pembayaran.</p>
+        <button id="payBtn"
+                type="button"
+                class="w-full bg-cyan-500 text-black font-semibold py-3 rounded-xl hover:bg-cyan-400 transition disabled:opacity-50 disabled:cursor-not-allowed">
+            Bayar Sekarang
+        </button>
+    </aside>
+</div>
+</main>
+
+<!-- FOOTER NAV -->
+<footer class="bg-[#070c17]/90 border-t border-white/5 mt-16">
+    <div class="max-w-7xl mx-auto px-6 py-12 grid gap-10 md:grid-cols-3">
+        <div class="space-y-4">
+            <div class="relative w-40 h-12 overflow-hidden">
+                <img src="/logo-dark.png" alt="Logo" class="w-full h-full object-contain logo-dark">
+                <img src="/logo-light.png" alt="Logo" class="w-full h-full object-contain hidden logo-light">
+            </div>
+            <p class="text-white/60 text-sm leading-relaxed">
+                Dukung Persela dengan gaya. Merchandise resmi, proses cepat, dan pengalaman belanja modern.
+            </p>
+            <div class="flex gap-3">
+                <span class="w-10 h-10 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-xs text-white/70">
+                    IG
+                </span>
+                <span class="w-10 h-10 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-xs text-white/70">
+                    TW
+                </span>
+                <span class="w-10 h-10 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-xs text-white/70">
+                    IN
+                </span>
+                <span class="w-10 h-10 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-xs text-white/70">
+                    YT
+                </span>
+            </div>
+        </div>
+
+        <div class="space-y-3">
+            <h3 class="font-semibold text-white">Contact Us</h3>
+            <p class="text-white/70 text-sm">Lamongan, Jawa Timur, Indonesia</p>
+            <p class="text-white/70 text-sm">support@perselastore.id</p>
+            <p class="text-white/70 text-sm">+62 812-0000-0000</p>
+        </div>
+
+        <div class="space-y-3">
+            <h3 class="font-semibold text-white">Stay Updated</h3>
+            <p class="text-white/70 text-sm">Daftar untuk info rilis produk dan promo terbaru.</p>
+            <div class="flex items-center gap-2 bg-white/5 border border-white/10 rounded-xl p-2">
+                <input type="email" placeholder="Email address" class="flex-1 bg-transparent text-sm text-white outline-none placeholder-white/40">
+                <button class="px-4 py-2 bg-cyan-500 text-black text-sm font-semibold rounded-lg hover:bg-cyan-400">Join</button>
+            </div>
+        </div>
+    </div>
+    <div class="border-t border-white/5 text-center text-xs text-white/50 py-4">
+        PerselaStore &copy; <span id="footerYear"></span>. All rights reserved.
+    </div>
+</footer>
+
+<!-- AUTH SCRIPT -->
+<script>
+// footer year
+document.getElementById('footerYear').textContent = new Date().getFullYear();
+
+const authMenu = document.getElementById('authMenu');
+const navSearchBtn = document.getElementById('navSearchBtn');
+const navSearchBar = document.getElementById('navSearchBar');
+const navSearchInput = document.getElementById('navSearchInput');
+const navSearchCancel = document.getElementById('navSearchCancel');
+const cartBadge = document.getElementById('cartBadge');
+const profileIcon = document.getElementById('profileIcon');
+
+const authButtons = document.getElementById('authButtons');
+
+function renderAuthNav() {
+    if (!authButtons) return;
+    const tokenRaw = localStorage.getItem('token');
+    const bearerRaw = localStorage.getItem('bearerToken');
+    const hasAuth = !!(tokenRaw || bearerRaw || localStorage.getItem('isLogin') === 'true');
+    const isAdmin = localStorage.getItem('isAdmin') === '1';
+
+    if (hasAuth) {
+        authMenu.innerHTML = '';
+        authButtons.innerHTML = `
+            ${isAdmin ? '<a href="/dashboard" class="px-5 py-2 rounded-full text-sm font-semibold transition shadow-lg shadow-cyan-500/20 cta-primary">Dashboard</a>' : ''}
+            <button onclick="logout()" class="px-4 py-2 rounded-full border text-sm transition cta-ghost">Logout</button>
+        `;
+        profileIcon?.classList.remove('hidden');
+    } else {
+        authMenu.innerHTML = '';
+        authButtons.innerHTML = `
+            <a href="/login" class="px-5 py-2 rounded-full text-sm font-semibold transition shadow-lg shadow-cyan-500/20 cta-primary">Login</a>
+            <a href="/register" class="px-5 py-2 rounded-full border text-sm transition cta-ghost">Register</a>
+        `;
+        profileIcon?.classList.add('hidden');
+    }
+}
+
+renderAuthNav();
+window.addEventListener('storage', renderAuthNav);
+
+// search prompt overlay
+navSearchBtn?.addEventListener('click', () => {
+    navSearchBar.classList.remove('hidden');
+    navSearchInput.focus();
+});
+navSearchCancel?.addEventListener('click', () => {
+    navSearchInput.value = '';
+    navSearchBar.classList.add('hidden');
+});
+document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+        navSearchBar.classList.add('hidden');
+    }
+});
+navSearchInput?.addEventListener('keyup', (e) => {
+    if (e.key === 'Enter') {
+        const q = navSearchInput.value.trim();
+        navSearchBar.classList.add('hidden');
+        if (q) window.location.href = '/produk?q=' + encodeURIComponent(q);
+    }
+});
+
+// cart badge
+function updateCartBadge() {
+    try {
+        const cart = JSON.parse(localStorage.getItem('cart') || '[]');
+        const count = cart.reduce((sum, item) => sum + (item.qty || 0), 0);
+        if (count > 0) {
+            cartBadge.textContent = count;
+            cartBadge.classList.remove('hidden');
+        } else {
+            cartBadge.classList.add('hidden');
+        }
+    } catch {
+        cartBadge.classList.add('hidden');
+    }
+}
+window.updateCartBadge = updateCartBadge;
+updateCartBadge();
+
+function logout() {
+    localStorage.removeItem('token');
+    localStorage.removeItem('bearerToken');
+    localStorage.removeItem('isAdmin');
+    localStorage.removeItem('userEmail');
+    localStorage.removeItem('userName');
+    location.href = '/login';
+}
+
+</script>
+
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+
+    // ================= LOGIN CHECK =================
+    const token = localStorage.getItem('token');
+    if (!token) {
+        alert('Silakan login terlebih dahulu');
+        window.location.href = '/login';
+        return;
+    }
+
+    // ================= SAFE GET CART =================
+    function getCart() {
+        try {
+            const data = JSON.parse(localStorage.getItem('cart'));
+            return Array.isArray(data) ? data : [];
+        } catch (e) {
+            console.error('Cart rusak:', e);
+            return [];
+        }
+    }
+
+    const el = document.getElementById('checkout-items');
+    const totalEl = document.getElementById('checkout-total');
+    const payBtn = document.getElementById('payBtn');
+    const paymentNote = document.getElementById('payment-note');
+
+    let cart = getCart();
+    let total = 0;
+    let paymentMethod = '';
+    let paymentInfo = '';
+
+    // ================= RENDER =================
+    function renderCheckout() {
+        el.innerHTML = '';
+        total = 0;
+
+        if (cart.length === 0) {
+            el.innerHTML = `
+                <p class="text-white/60">
+                    Keranjang kosong. Silakan pilih produk terlebih dahulu.
+                </p>
+            `;
+            totalEl.innerText = 'Rp 0';
+            payBtn.disabled = true;
+            return;
+        }
+
+        payBtn.disabled = false;
+
+        cart.forEach(item => {
+            if (!item.name || !item.price) return;
+
+            total += item.price * item.qty;
+
+            el.innerHTML += `
+            <div class="flex justify-between bg-white/5 p-4 rounded-lg border border-white/10">
+                <div>
+                    <strong>${item.name}</strong><br>
+                    <span class="text-sm text-white/60">
+                        Ukuran: ${item.size} | Qty: ${item.qty}
+                    </span>
+                </div>
+                <div class="text-cyan-400">
+                    Rp ${(item.price * item.qty).toLocaleString('id-ID')}
+                </div>
+            </div>
+            `;
+        });
+
+        totalEl.innerText = 'Rp ' + total.toLocaleString('id-ID');
+    }
+
+    // ================= PAYMENT SELECTION =================
+    function bindPayment() {
+        document.querySelectorAll('input[name=\"paymethod\"]').forEach(r => {
+            r.addEventListener('change', () => {
+                paymentMethod = r.value;
+                switch (paymentMethod) {
+                    case 'Virtual Account - BCA':
+                        paymentInfo = 'VA 1234 5678 9012 (BCA) - Otomatis terverifikasi';
+                        break;
+                    case 'Debit Card':
+                        paymentInfo = 'Gunakan kartu Visa/Mastercard. Simulasi: 4111 1111 1111 1111 / 12-30 / 123';
+                        break;
+                    case 'E-Wallet':
+                        paymentInfo = 'Kirim ke OVO/DANA/ShopeePay 0812-0000-0000, akan terverifikasi otomatis';
+                        break;
+                    case 'QRIS':
+                        paymentInfo = 'Kode QRIS: QR-PSL-' + Math.floor(Math.random()*90000 + 10000);
+                        break;
+                    default:
+                        paymentInfo = '';
+                }
+                paymentNote.textContent = paymentInfo;
+            });
+        });
+    }
+
+    // ================= ORDER =================
+    payBtn.addEventListener('click', () => {
+        if (cart.length === 0) return;
+        if (!paymentMethod) {
+            alert('Pilih metode pembayaran dulu');
+            return;
+        }
+
+        const payload = {
+            items: cart,
+            total: Math.round(total),
+            paymentMethod,
+            paymentInfo
+        };
+
+        const headers = { 'Content-Type': 'application/json' };
+        if (token) headers['Authorization'] = 'Bearer ' + token;
+
+        fetch('/api/orders', {
+            method: 'POST',
+            headers,
+            body: JSON.stringify(payload)
+        })
+        .then(async res => {
+            const text = await res.text();
+            let data;
+            try { data = JSON.parse(text); } catch { data = null; }
+            if (!res.ok) {
+                const msg = data?.message || text || 'Gagal membuat pesanan';
+                throw new Error(msg);
+            }
+            return data;
+        })
+        .then(res => {
+            const order = res.data || { ...payload, id: Date.now(), date: new Date().toLocaleString(), status: 'Diproses' };
+            // simpan ringkas untuk halaman sukses sebagai fallback
+            localStorage.setItem('lastOrder', JSON.stringify(order));
+            localStorage.removeItem('cart');
+            window.location.href = '/checkout-success';
+        })
+        .catch(err => {
+            console.error(err);
+            alert('Gagal memproses pesanan: ' + err.message);
+        });
+    });
+
+    renderCheckout();
+    bindPayment();
+});
+</script>
+</body>
+</html>

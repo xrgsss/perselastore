@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Keranjang</title>
+
+    <!-- Tailwind CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <style>
+        :root {
+            --bg: radial-gradient(circle at top, #0f1b2d, #05080f);
+            --text: #ffffff;
+            --muted: rgba(255,255,255,0.7);
+            --surface: rgba(255,255,255,0.04);
+            --border: rgba(255,255,255,0.08);
+            --accent: #22d3ee;
+            --nav-grad: linear-gradient(90deg, rgba(10,18,32,0.95), rgba(10,19,36,0.8), rgba(8,16,32,0.95));
+        }
+        body {
+            background: var(--bg);
+            color: var(--text);
+            transition: background 0.3s ease, color 0.3s ease;
+            scroll-behavior: smooth;
+        }
+        .nav-link {
+            color: var(--text);
+            opacity: 0.82;
+            transition: color 0.2s ease, opacity 0.2s ease;
+        }
+        .nav-link:hover { color: var(--accent); opacity: 1; }
+        .cta-primary {
+            background: var(--accent);
+            color: #0b1224;
+        }
+        .cta-primary:hover { filter: brightness(1.05); }
+        .cta-ghost {
+            border-color: var(--border);
+            color: var(--text);
+        }
+        .cta-ghost:hover { border-color: var(--accent); color: var(--accent); }
+        .surface {
+            background: var(--surface);
+            border-color: var(--border);
+        }
+        .nav-surface {
+            background: var(--nav-grad);
+            border-color: var(--border);
+        }
+    </style>
+</head>
+<body class="text-white" data-theme="dark">
+
+<!-- NAVBAR -->
+<nav class="sticky top-0 z-50 nav-surface backdrop-blur border-b">
+    <div class="max-w-7xl mx-auto px-6 py-3 flex items-center gap-6">
+        <a href="/" class="flex items-center gap-3">
+            <div class="relative w-40 h-12 overflow-hidden">
+                <img src="/logo-dark.png" alt="Logo" class="w-full h-full object-contain logo-dark">
+                <img src="/logo-light.png" alt="Logo" class="w-full h-full object-contain hidden logo-light">
+            </div>
+        </a>
+
+        <div class="flex-1 flex justify-center">
+            <div class="flex items-center gap-6 text-sm font-semibold">
+                <a href="/" class="nav-link">Beranda</a>
+                <a href="/produk" class="nav-link">Produk</a>
+                <a href="/orders" class="nav-link">Riwayat</a>
+            </div>
+        </div>
+
+        <div class="flex items-center gap-3" id="authMenu"></div>
+
+        <div class="flex items-center gap-3 text-white">
+            <div class="relative">
+                <button id="navSearchBtn" title="Cari produk" class="p-2 rounded-full hover:bg-white/10">
+                    <img src="/icons/search.png" alt="search" class="w-5 h-5">
+                </button>
+                <div id="navSearchBar" class="hidden fixed left-1/2 -translate-x-1/2 top-20 bg-white/95 backdrop-blur text-black rounded-full px-4 py-2 flex items-center gap-3 shadow-2xl border border-black/5 w-[min(90%,640px)]">
+                    <img src="/icons/search.png" alt="search" class="w-5 h-5 opacity-70">
+                    <input id="navSearchInput" type="text" placeholder="Search" class="flex-1 outline-none bg-transparent text-base text-gray-700 placeholder-gray-400">
+                    <button id="navSearchCancel" class="text-sm text-blue-600 px-3 py-1 rounded-full hover:bg-blue-50">Cancel</button>
+                </div>
+            </div>
+            <a href="/favorites" title="Favorit" class="p-2 rounded-full hover:bg-white/10">
+                <img src="/icons/fav.png" alt="favorit" class="w-5 h-5">
+            </a>
+            <a href="/cart" title="Keranjang" class="relative p-2 rounded-full hover:bg-white/10">
+                <img src="/icons/cart.png" alt="cart" class="w-5 h-5">
+                <span id="cartBadge" class="hidden absolute -top-1 -right-1 text-xs px-1.5 py-0.5 rounded-full bg-cyan-500 text-black font-semibold"></span>
+            </a>
+            <a href="/profile" id="profileIcon" title="Profil" class="hidden p-2 rounded-full hover:bg-white/10">
+                <img src="/icons/profile.png" alt="profil" class="w-5 h-5">
+            </a>
+            <div id="authButtons" class="flex items-center gap-2"></div>
+        </div>
+    </div>
+</nav>
+
+<!-- CONTENT -->
+<main class="max-w-7xl mx-auto px-6 py-10">
+    <h1 class="text-3xl font-bold mb-8">Keranjang</h1>
+
+<div id="cart-list" class="space-y-4"></div>
+
+<div class="flex justify-between items-center mt-8 border-t border-white/20 pt-6">
+    <h2 class="text-xl">
+        Total:
+        <span id="cart-total" class="text-cyan-400 font-bold"></span>
+    </h2>
+
+    <!-- ✅ CHECKOUT LINK -->
+    <a href="/checkout"
+       class="bg-cyan-500 px-8 py-3 rounded-full text-black font-semibold">
+        Checkout
+    </a>
+</div>
+</main>
+
+<!-- FOOTER NAV -->
+<footer class="bg-[#070c17]/90 border-t border-white/5 mt-16">
+    <div class="max-w-7xl mx-auto px-6 py-12 grid gap-10 md:grid-cols-3">
+        <div class="space-y-4">
+            <div class="relative w-40 h-12 overflow-hidden">
+                <img src="/logo-dark.png" alt="Logo" class="w-full h-full object-contain logo-dark">
+                <img src="/logo-light.png" alt="Logo" class="w-full h-full object-contain hidden logo-light">
+            </div>
+            <p class="text-white/60 text-sm leading-relaxed">
+                Dukung Persela dengan gaya. Merchandise resmi, proses cepat, dan pengalaman belanja modern.
+            </p>
+            <div class="flex gap-3">
+                <span class="w-10 h-10 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-xs text-white/70">
+                    IG
+                </span>
+                <span class="w-10 h-10 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-xs text-white/70">
+                    TW
+                </span>
+                <span class="w-10 h-10 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-xs text-white/70">
+                    IN
+                </span>
+                <span class="w-10 h-10 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-xs text-white/70">
+                    YT
+                </span>
+            </div>
+        </div>
+
+        <div class="space-y-3">
+            <h3 class="font-semibold text-white">Contact Us</h3>
+            <p class="text-white/70 text-sm">Lamongan, Jawa Timur, Indonesia</p>
+            <p class="text-white/70 text-sm">support@perselastore.id</p>
+            <p class="text-white/70 text-sm">+62 812-0000-0000</p>
+        </div>
+
+        <div class="space-y-3">
+            <h3 class="font-semibold text-white">Stay Updated</h3>
+            <p class="text-white/70 text-sm">Daftar untuk info rilis produk dan promo terbaru.</p>
+            <div class="flex items-center gap-2 bg-white/5 border border-white/10 rounded-xl p-2">
+                <input type="email" placeholder="Email address" class="flex-1 bg-transparent text-sm text-white outline-none placeholder-white/40">
+                <button class="px-4 py-2 bg-cyan-500 text-black text-sm font-semibold rounded-lg hover:bg-cyan-400">Join</button>
+            </div>
+        </div>
+    </div>
+    <div class="border-t border-white/5 text-center text-xs text-white/50 py-4">
+        PerselaStore &copy; <span id="footerYear"></span>. All rights reserved.
+    </div>
+</footer>
+
+<!-- AUTH SCRIPT -->
+<script>
+// footer year
+document.getElementById('footerYear').textContent = new Date().getFullYear();
+
+const authMenu = document.getElementById('authMenu');
+const navSearchBtn = document.getElementById('navSearchBtn');
+const navSearchBar = document.getElementById('navSearchBar');
+const navSearchInput = document.getElementById('navSearchInput');
+const navSearchCancel = document.getElementById('navSearchCancel');
+const cartBadge = document.getElementById('cartBadge');
+const profileIcon = document.getElementById('profileIcon');
+
+const authButtons = document.getElementById('authButtons');
+
+function renderAuthNav() {
+    if (!authButtons) return;
+    const tokenRaw = localStorage.getItem('token');
+    const bearerRaw = localStorage.getItem('bearerToken');
+    const hasAuth = !!(tokenRaw || bearerRaw || localStorage.getItem('isLogin') === 'true');
+    const isAdmin = localStorage.getItem('isAdmin') === '1';
+
+    if (hasAuth) {
+        authMenu.innerHTML = '';
+        authButtons.innerHTML = `
+            ${isAdmin ? '<a href="/dashboard" class="px-5 py-2 rounded-full text-sm font-semibold transition shadow-lg shadow-cyan-500/20 cta-primary">Dashboard</a>' : ''}
+            <button onclick="logout()" class="px-4 py-2 rounded-full border text-sm transition cta-ghost">Logout</button>
+        `;
+        profileIcon?.classList.remove('hidden');
+    } else {
+        authMenu.innerHTML = '';
+        authButtons.innerHTML = `
+            <a href="/login" class="px-5 py-2 rounded-full text-sm font-semibold transition shadow-lg shadow-cyan-500/20 cta-primary">Login</a>
+            <a href="/register" class="px-5 py-2 rounded-full border text-sm transition cta-ghost">Register</a>
+        `;
+        profileIcon?.classList.add('hidden');
+    }
+}
+
+renderAuthNav();
+window.addEventListener('storage', renderAuthNav);
+
+// search prompt overlay
+navSearchBtn?.addEventListener('click', () => {
+    navSearchBar.classList.remove('hidden');
+    navSearchInput.focus();
+});
+navSearchCancel?.addEventListener('click', () => {
+    navSearchInput.value = '';
+    navSearchBar.classList.add('hidden');
+});
+document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+        navSearchBar.classList.add('hidden');
+    }
+});
+navSearchInput?.addEventListener('keyup', (e) => {
+    if (e.key === 'Enter') {
+        const q = navSearchInput.value.trim();
+        navSearchBar.classList.add('hidden');
+        if (q) window.location.href = '/produk?q=' + encodeURIComponent(q);
+    }
+});
+
+// cart badge
+function updateCartBadge() {
+    try {
+        const cart = JSON.parse(localStorage.getItem('cart') || '[]');
+        const count = cart.reduce((sum, item) => sum + (item.qty || 0), 0);
+        if (count > 0) {
+            cartBadge.textContent = count;
+            cartBadge.classList.remove('hidden');
+        } else {
+            cartBadge.classList.add('hidden');
+        }
+    } catch {
+        cartBadge.classList.add('hidden');
+    }
+}
+window.updateCartBadge = updateCartBadge;
+updateCartBadge();
+
+function logout() {
+    localStorage.removeItem('token');
+    localStorage.removeItem('bearerToken');
+    localStorage.removeItem('isAdmin');
+    localStorage.removeItem('userEmail');
+    localStorage.removeItem('userName');
+    location.href = '/login';
+}
+
+</script>
+
+<script>
+let cart = JSON.parse(localStorage.getItem('cart')) || [];
+const el = document.getElementById('cart-list');
+const totalEl = document.getElementById('cart-total');
+
+function renderCart() {
+    el.innerHTML = '';
+    let total = 0;
+
+    if (cart.length === 0) {
+        el.innerHTML = '<p class="text-white/60">Keranjang masih kosong.</p>';
+        totalEl.innerText = 'Rp 0';
+        localStorage.setItem('cart', JSON.stringify(cart));
+        if (window.updateCartBadge) window.updateCartBadge();
+        return;
+    }
+
+    cart.forEach((item, index) => {
+        total += item.price * item.qty;
+
+        el.innerHTML += `
+        <div class="flex gap-4 items-center bg-white/5 p-4 rounded-xl">
+            <img src="${item.image}" class="w-20 h-20 rounded-lg object-cover">
+
+            <div class="flex-1">
+                <h3 class="font-semibold">${item.name}</h3>
+
+                <!-- UKURAN -->
+                <select onchange="updateSize(${index}, this.value)"
+                    class="bg-black/30 border border-white/20 rounded px-2 py-1 mt-1">
+                    ${['S','M','L','XL'].map(size => `
+                        <option ${item.size === size ? 'selected':''}>${size}</option>
+                    `).join('')}
+                </select>
+
+                <p class="text-cyan-400 mt-1">
+                    Rp ${(item.price * item.qty).toLocaleString('id-ID')}
+                </p>
+            </div>
+
+            <!-- QTY -->
+            <div class="flex items-center gap-2">
+                <button onclick="changeQty(${index}, -1)" class="qty-btn">−</button>
+                <span>${item.qty}</span>
+                <button onclick="changeQty(${index}, 1)" class="qty-btn">+</button>
+            </div>
+
+            <!-- HAPUS -->
+            <button onclick="removeItem(${index})"
+                class="text-red-400 hover:underline ml-4">
+                Hapus
+            </button>
+        </div>
+        `;
+    });
+
+    totalEl.innerText = 'Rp ' + total.toLocaleString('id-ID');
+    localStorage.setItem('cart', JSON.stringify(cart));
+    if (window.updateCartBadge) window.updateCartBadge();
+}
+
+function changeQty(index, delta) {
+    cart[index].qty += delta;
+    if (cart[index].qty <= 0) {
+        cart.splice(index, 1);
+    }
+    renderCart();
+}
+
+function updateSize(index, size) {
+    cart[index].size = size;
+    localStorage.setItem('cart', JSON.stringify(cart));
+}
+
+function removeItem(index) {
+    if (confirm('Hapus produk dari keranjang?')) {
+        cart.splice(index, 1);
+        renderCart();
+    }
+}
+
+renderCart();
+</script>
+
+<style>
+.qty-btn{
+    width:32px;
+    height:32px;
+    border-radius:50%;
+    border:1px solid rgba(255,255,255,.2);
+}
+.qty-btn:hover{
+    border-color:#22d3ee;
+}
+</style>
+</body>
+</html>
