@@ -48,6 +48,11 @@
             background: var(--nav-grad);
             border-color: var(--border);
         }
+        .logo-wrap{
+            display:flex;
+            align-items:center;
+            height:48px;
+        }
     </style>
 </head>
 <body class="text-white" data-theme="dark">
@@ -56,7 +61,7 @@
 <nav class="sticky top-0 z-50 nav-surface backdrop-blur border-b">
     <div class="max-w-7xl mx-auto px-6 py-3 flex items-center gap-6">
         <a href="/" class="flex items-center gap-3">
-            <div class="relative w-40 h-12 overflow-hidden">
+            <div class="logo-wrap relative w-40">
                 <img src="/logo-dark.png" alt="Logo" class="w-full h-full object-contain logo-dark">
                 <img src="/logo-light.png" alt="Logo" class="w-full h-full object-contain hidden logo-light">
             </div>
@@ -550,6 +555,9 @@ nextBtn?.addEventListener('click', () => scrollSlider(1));
     border-radius: 0;
     padding: 1.5rem 1rem;
     min-height: 70vh;
+  }
+  #authButtons {
+    display: none;
   }
 }
 </style>
