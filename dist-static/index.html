@@ -62,7 +62,7 @@
             </div>
         </a>
 
-        <div class="flex-1 flex justify-center">
+        <div class="flex-1 hidden md:flex justify-center">
             <div class="flex items-center gap-6 text-sm font-semibold">
                 <a href="/" class="nav-link">Beranda</a>
                 <a href="/produk" class="nav-link">Produk</a>
@@ -94,6 +94,13 @@
                 <img src="/icons/profile.png" alt="profil" class="w-5 h-5">
             </a>
             <div id="authButtons" class="flex items-center gap-2"></div>
+            <button id="mobileMenuToggle" class="md:hidden p-2 rounded-full hover:bg-white/10 focus:outline-none" aria-label="Menu">
+                <div class="space-y-1.5">
+                    <span class="block w-6 h-0.5 bg-white"></span>
+                    <span class="block w-6 h-0.5 bg-white"></span>
+                    <span class="block w-6 h-0.5 bg-white"></span>
+                </div>
+            </button>
         </div>
     </div>
 </nav>
@@ -208,6 +215,31 @@
     </div>
 </footer>
 
+<!-- MOBILE MENU -->
+<div id="mobileMenu" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-[60] hidden">
+  <div class="absolute inset-y-0 right-0 w-72 max-w-[80%] bg-[#0b1220] border-l border-white/10 shadow-2xl p-6 flex flex-col gap-4">
+    <div class="flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <div class="relative w-32 h-10 overflow-hidden">
+          <img src="/logo-dark.png" alt="Logo" class="w-full h-full object-contain logo-dark">
+          <img src="/logo-light.png" alt="Logo" class="w-full h-full object-contain hidden logo-light">
+        </div>
+      </div>
+      <button id="mobileMenuClose" class="p-2 rounded-full hover:bg-white/10" aria-label="Tutup menu">
+        ✕
+      </button>
+    </div>
+    <div class="flex flex-col gap-2 text-sm font-semibold">
+      <a href="/" class="nav-link block px-3 py-2 rounded-lg hover:bg-white/5">Beranda</a>
+      <a href="/produk" class="nav-link block px-3 py-2 rounded-lg hover:bg-white/5">Produk</a>
+      <a href="/orders" class="nav-link block px-3 py-2 rounded-lg hover:bg-white/5">Riwayat</a>
+    </div>
+    <div class="mt-auto pt-2 border-t border-white/10" id="mobileAuthContainer">
+      <!-- diisi via script -->
+    </div>
+  </div>
+</div>
+
 <!-- AUTH SCRIPT -->
 <script>
 // footer year
@@ -219,6 +251,10 @@ const navSearchBar = document.getElementById('navSearchBar');
 const navSearchInput = document.getElementById('navSearchInput');
 const navSearchCancel = document.getElementById('navSearchCancel');
 const cartBadge = document.getElementById('cartBadge');
+const mobileMenu = document.getElementById('mobileMenu');
+const mobileMenuToggle = document.getElementById('mobileMenuToggle');
+const mobileMenuClose = document.getElementById('mobileMenuClose');
+const mobileAuthContainer = document.getElementById('mobileAuthContainer');
 const profileIcon = document.getElementById('profileIcon');
 
 const authButtons = document.getElementById('authButtons');
@@ -237,6 +273,21 @@ function renderAuthNav() {
             <button onclick="logout()" class="px-4 py-2 rounded-full border text-sm transition cta-ghost">Logout</button>
         `;
         profileIcon?.classList.remove('hidden');
+        if (mobileAuthContainer) {
+            mobileAuthContainer.innerHTML = `
+                <div class="flex flex-col gap-2 text-sm font-semibold">
+                    ${isAdmin ? '<a href="/dashboard" class="block px-3 py-2 rounded-lg bg-cyan-500 text-black text-center font-semibold">Dashboard</a>' : ''}
+                    <button id="mobileLogoutBtn" class="w-full px-4 py-2 rounded-lg border border-white/20 hover:border-red-400 text-sm font-semibold text-left">
+                        Logout
+                    </button>
+                </div>
+            `;
+            const mobileLogoutBtn = document.getElementById('mobileLogoutBtn');
+            mobileLogoutBtn?.addEventListener('click', () => {
+                closeMobileMenu();
+                logout();
+            });
+        }
     } else {
         authMenu.innerHTML = '';
         authButtons.innerHTML = `
@@ -244,6 +295,14 @@ function renderAuthNav() {
             <a href="/register" class="px-5 py-2 rounded-full border text-sm transition cta-ghost">Register</a>
         `;
         profileIcon?.classList.add('hidden');
+        if (mobileAuthContainer) {
+            mobileAuthContainer.innerHTML = `
+                <div class="flex flex-col gap-2 text-sm font-semibold">
+                    <a href="/login" class="block px-3 py-2 rounded-lg bg-cyan-500 text-black text-center font-semibold">Login</a>
+                    <a href="/register" class="block px-3 py-2 rounded-lg border border-white/20 text-center font-semibold hover:border-cyan-400">Register</a>
+                </div>
+            `;
+        }
     }
 }
 
@@ -298,6 +357,16 @@ function logout() {
     localStorage.removeItem('userName');
     location.href = '/login';
 }
+
+// mobile menu toggle
+function closeMobileMenu() {
+  mobileMenu?.classList.add('hidden');
+}
+mobileMenuToggle?.addEventListener('click', () => mobileMenu?.classList.remove('hidden'));
+mobileMenuClose?.addEventListener('click', closeMobileMenu);
+mobileMenu?.addEventListener('click', (e) => {
+  if (e.target === mobileMenu) closeMobileMenu();
+});
 
 </script>
 
