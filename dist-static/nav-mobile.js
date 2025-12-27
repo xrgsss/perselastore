@@ -127,6 +127,7 @@
     localStorage.removeItem('isAdmin');
     localStorage.removeItem('userEmail');
     localStorage.removeItem('userName');
+    localStorage.removeItem('isLogin');
     window.location.href = '/login';
   }
 
