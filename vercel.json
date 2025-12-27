@@ -1,0 +1,11 @@
+{
+  "version": 2,
+  "builds": [
+    { "src": "dist-static/**/*", "use": "@vercel/static" }
+  ],
+  "routes": [
+    { "src": "/produk/(.+)", "dest": "/produk/detail/index.html" },
+    { "src": "/orders/(.+)", "dest": "/orders/detail/index.html" },
+    { "src": "/(.*)", "dest": "/$1" }
+  ]
+}

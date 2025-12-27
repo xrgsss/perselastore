@@ -3,6 +3,8 @@
 /public/build
 /public/hot
 /public/storage
+/dist-static
+/.vercel
 /storage/*.key
 /vendor
 .env
