@@ -50,6 +50,8 @@
         }
     </style>
   <script defer src='/nav-mobile.js'></script>
+  <script src="/env.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.3/dist/umd/supabase.js"></script>
 </head>
 <body class="text-white" data-theme="dark">
 
@@ -199,6 +201,10 @@ const currentImage = document.getElementById('currentImage');
 const cancelBtn = document.getElementById('cancelBtn');
 const ordersList = document.getElementById('ordersList');
 const refreshOrdersBtn = document.getElementById('refreshOrders');
+const supabaseConfig = window.__APP_CONFIG || {};
+const supabaseClient = (window.supabase && supabaseConfig.supabaseUrl && supabaseConfig.supabaseAnonKey)
+    ? window.supabase.createClient(supabaseConfig.supabaseUrl, supabaseConfig.supabaseAnonKey)
+    : null;
 
 function authHeaders() {
     const bearer = localStorage.getItem('bearerToken');
@@ -222,24 +228,31 @@ async function ensureAdmin() {
 // LOAD DATA
 function loadJersey() {
     list.innerHTML = `<tr><td class="px-4 py-3 text-white/60" colspan="6">Memuat...</td></tr>`;
-    fetch(api)
-        .then(res => res.json())
-        .then(res => {
+    if (!supabaseClient) {
+        list.innerHTML = `<tr><td class="px-4 py-3 text-red-400" colspan="6">Supabase belum dikonfigurasi.</td></tr>`;
+        return;
+    }
+    supabaseClient
+        .from('jerseys')
+        .select('*')
+        .order('created_at', { ascending: false })
+        .then(({ data, error }) => {
+            if (error) throw error;
             list.innerHTML = '';
-            res.data.forEach(j => {
+            (data || []).forEach(j => {
                 list.innerHTML += `
                 <tr class="hover:bg-white/5">
-                    <td class="px-4 py-3">${j.nama}</td>
-                    <td class="px-4 py-3 text-white/70">${j.kategori}</td>
-                    <td class="px-4 py-3 text-cyan-300">Rp ${Number(j.harga).toLocaleString('id-ID')}</td>
-                    <td class="px-4 py-3">${j.stok}</td>
-                    <td class="px-4 py-3">${j.ukuran}</td>
+                    <td class="px-4 py-3">${j.nama || '-'}</td>
+                    <td class="px-4 py-3 text-white/70">${j.kategori || '-'}</td>
+                    <td class="px-4 py-3 text-cyan-300">Rp ${Number(j.harga || 0).toLocaleString('id-ID')}</td>
+                    <td class="px-4 py-3">${j.stok ?? '-'}</td>
+                    <td class="px-4 py-3">${j.ukuran || '-'}</td>
                     <td class="px-4 py-3 text-center">
                         <button onclick='startEdit(${JSON.stringify(j)})'
                             class="px-3 py-1 rounded-lg bg-white/10 text-white text-xs hover:bg-white/20 mr-2">
                             Edit
                         </button>
-                        <button onclick="deleteJersey(${j.id})"
+                        <button onclick="deleteJersey('${j.id}')"
                             class="px-3 py-1 rounded-lg bg-red-500 text-white text-xs hover:bg-red-400">
                             Hapus
                         </button>
@@ -247,52 +260,49 @@ function loadJersey() {
                 </tr>
                 `;
             });
-            if (!res.data.length) {
+            if (!data || !data.length) {
                 list.innerHTML = `<tr><td class="px-4 py-3 text-white/60" colspan="6">Belum ada data.</td></tr>`;
             }
         })
-        .catch(() => {
+        .catch((err) => {
+            console.error(err);
             list.innerHTML = `<tr><td class="px-4 py-3 text-red-400" colspan="6">Gagal memuat data.</td></tr>`;
         });
 }
 
 // TAMBAH / UPDATE
 function saveJersey() {
+    if (!supabaseClient) {
+        alert('Supabase belum dikonfigurasi.');
+        return;
+    }
+    const email = (localStorage.getItem('userEmail') || '').toLowerCase();
+    if (email !== ADMIN_EMAIL) {
+        alert('Hanya admin yang dapat menyimpan data.');
+        return;
+    }
+
     const form = new FormData();
-    form.append('nama', nama.value);
-    form.append('kategori', kategori.value);
-    form.append('harga', harga.value);
-    form.append('stok', stok.value);
-    form.append('ukuran', ukuran.value);
-    if (gambarInput.files[0]) {
-        form.append('gambar', gambarInput.files[0]);
-    }
+    const payload = {
+        nama: nama.value,
+        kategori: kategori.value,
+        harga: Number(harga.value || 0),
+        stok: Number(stok.value || 0),
+        ukuran: ukuran.value,
+        gambar: gambarInput.files[0]?.name || currentImage.textContent || ''
+    };
 
-    const url = currentEditId ? `${api}/${currentEditId}` : api;
-    // gunakan POST + _method=PUT agar upload file terbaca oleh Laravel
-    const method = currentEditId ? 'POST' : 'POST';
-    if (currentEditId) {
-        form.append('_method', 'PUT');
-    }
+    const request = currentEditId
+        ? supabaseClient.from('jerseys').update(payload).eq('id', currentEditId)
+        : supabaseClient.from('jerseys').insert([payload]);
 
-    fetch(url, {
-        method,
-        headers: authHeaders(),
-        body: form
-    })
-    .then(async res => {
-        if (!res.ok) {
-            const txt = await res.text();
-            alert('Gagal menyimpan: ' + txt);
-            return;
-        }
-        return res.json();
-    })
-    .then(() => {
-        resetForm();
-        loadJersey();
-    })
-    .catch(err => alert('Gagal menyimpan: ' + err.message));
+    request
+        .then(({ error }) => {
+            if (error) throw error;
+            resetForm();
+            loadJersey();
+        })
+        .catch(err => alert('Gagal menyimpan: ' + err.message));
 }
 
 // LOAD ORDERS (ADMIN)
@@ -366,28 +376,25 @@ function loadOrdersAdmin() {
 // DELETE
 function deleteJersey(id) {
     if (!confirm('Hapus data ini?')) return;
+    if (!supabaseClient) {
+        alert('Supabase belum dikonfigurasi.');
+        return;
+    }
+    const email = (localStorage.getItem('userEmail') || '').toLowerCase();
+    if (email !== ADMIN_EMAIL) {
+        alert('Hanya admin yang dapat menghapus data.');
+        return;
+    }
 
-    fetch(`${api}/${id}`, {
-        method: 'DELETE',
-        headers: authHeaders()
-    })
-    .then(async res => {
-        if (res.status === 401) {
-            alert('Sesi habis, silakan login ulang.');
-            localStorage.removeItem('token');
-            localStorage.removeItem('bearerToken');
-            localStorage.removeItem('isAdmin');
-            location.href = '/login';
-            return;
-        }
-        if (!res.ok) {
-            const txt = await res.text();
-            alert('Gagal menghapus: ' + txt);
-            return;
-        }
-        loadJersey();
-    })
-    .catch(err => alert('Gagal menghapus: ' + err.message));
+    supabaseClient
+        .from('jerseys')
+        .delete()
+        .eq('id', id)
+        .then(({ error }) => {
+            if (error) throw error;
+            loadJersey();
+        })
+        .catch(err => alert('Gagal menghapus: ' + err.message));
 }
 
 function startEdit(j) {
