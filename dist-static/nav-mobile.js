@@ -92,7 +92,7 @@
     const bearerRaw = localStorage.getItem('bearerToken');
     const hasAuth = !!(tokenRaw || bearerRaw || localStorage.getItem('isLogin') === 'true');
     const email = (localStorage.getItem('userEmail') || '').toLowerCase();
-    const isAdmin = localStorage.getItem('isAdmin') === '1' && email === 'admin@gmail.com';
+    const isAdmin = email === 'admin@gmail.com';
 
     if (hasAuth) {
       authEl.innerHTML = `
