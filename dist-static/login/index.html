@@ -141,44 +141,48 @@
     </div>
 </div>
 
+<script src="/env.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.3/dist/umd/supabase.js"></script>
 <script>
-function login() {
+const supabaseConfig = window.__APP_CONFIG || {};
+const supabaseClient = (window.supabase && supabaseConfig.supabaseUrl && supabaseConfig.supabaseAnonKey)
+    ? window.supabase.createClient(supabaseConfig.supabaseUrl, supabaseConfig.supabaseAnonKey)
+    : null;
+
+async function login() {
     const email = document.getElementById('email').value;
     const password = document.getElementById('password').value;
+    const errorEl = document.getElementById('error');
+    errorEl.innerText = '';
 
-    fetch('/api/login', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            'Accept': 'application/json'
-        },
-        body: JSON.stringify({ email, password })
-    })
-    .then(res => res.json())
-    .then(data => {
-        if (data.access_token) {
-            // simpan token
-            localStorage.setItem('token', data.access_token);
-            localStorage.setItem('bearerToken', `Bearer ${data.access_token}`);
+    if (!supabaseClient) {
+        errorEl.innerText = 'Konfigurasi Supabase belum diisi.';
+        return;
+    }
+
+    try {
+        const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
+        if (error) {
+            errorEl.innerText = error.message;
+            return;
+        }
+
+        const session = data.session;
+        const user = data.user;
+        if (session?.access_token) {
+            localStorage.setItem('token', session.access_token);
+            localStorage.setItem('bearerToken', `Bearer ${session.access_token}`);
             localStorage.setItem('isLogin', 'true');
             localStorage.setItem('userEmail', email);
-            localStorage.setItem('userName', (data.user && data.user.name) ? data.user.name : '');
-            const isAdmin = data.user && (data.user.is_admin === true || data.user.is_admin === 1 || data.user.is_admin === '1');
-            if (isAdmin) {
-                localStorage.setItem('isAdmin', '1');
-                window.location.href = '/dashboard';
-            } else {
-                localStorage.removeItem('isAdmin');
-                window.location.href = '/';
-            }
+            localStorage.setItem('userName', user?.user_metadata?.full_name || user?.email || '');
+            // tanpa backend role check; default user flow
+            window.location.href = '/';
         } else {
-            document.getElementById('error').innerText =
-                data.message ?? 'Login gagal';
+            errorEl.innerText = 'Login gagal';
         }
-    })
-    .catch(() => {
-        document.getElementById('error').innerText = 'Server error';
-    });
+    } catch (e) {
+        errorEl.innerText = 'Server error';
+    }
 }
 
 // bersihkan autofill browser

@@ -152,8 +152,15 @@
     </div>
 </div>
 
+<script src="/env.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.3/dist/umd/supabase.js"></script>
 <script>
-function register() {
+const supabaseConfig = window.__APP_CONFIG || {};
+const supabaseClient = (window.supabase && supabaseConfig.supabaseUrl && supabaseConfig.supabaseAnonKey)
+    ? window.supabase.createClient(supabaseConfig.supabaseUrl, supabaseConfig.supabaseAnonKey)
+    : null;
+
+async function register() {
     const name = document.getElementById('name').value;
     const email = document.getElementById('email').value;
     const password = document.getElementById('password').value;
@@ -164,32 +171,46 @@ function register() {
     errorEl.innerText = '';
     successEl.innerText = '';
 
-    fetch('/api/register', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            'Accept': 'application/json'
-        },
-        body: JSON.stringify({ name, email, password, password_confirmation })
-    })
-    .then(res => res.json())
-    .then(data => {
-        if (data.access_token) {
-            localStorage.setItem('token', data.access_token);
+    if (!supabaseClient) {
+        errorEl.innerText = 'Konfigurasi Supabase belum diisi.';
+        return;
+    }
+
+    if (password !== password_confirmation) {
+        errorEl.innerText = 'Password dan konfirmasi tidak cocok.';
+        return;
+    }
+
+    try {
+        const { data, error } = await supabaseClient.auth.signUp({
+            email,
+            password,
+            options: {
+                data: { full_name: name },
+                emailRedirectTo: window.location.origin + '/login'
+            }
+        });
+
+        if (error) {
+            errorEl.innerText = error.message;
+            return;
+        }
+
+        const session = data.session;
+        if (session?.access_token) {
+            localStorage.setItem('token', session.access_token);
+            localStorage.setItem('bearerToken', `Bearer ${session.access_token}`);
             localStorage.setItem('isLogin', 'true');
             localStorage.setItem('userEmail', email);
             localStorage.setItem('userName', name);
             successEl.innerText = 'Registrasi berhasil, mengalihkan...';
             setTimeout(() => window.location.href = '/checkout', 800);
-        } else if (data.message) {
-            errorEl.innerText = data.message;
         } else {
-            errorEl.innerText = 'Registrasi gagal';
+            successEl.innerText = 'Registrasi berhasil. Cek email untuk konfirmasi.';
         }
-    })
-    .catch(() => {
+    } catch (e) {
         errorEl.innerText = 'Server error';
-    });
+    }
 }
 
 // bersihkan autofill browser
