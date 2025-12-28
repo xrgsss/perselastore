@@ -316,6 +316,7 @@ const supabaseClient = (window.supabase && supabaseConfig.supabaseUrl && supabas
     ? window.supabase.createClient(supabaseConfig.supabaseUrl, supabaseConfig.supabaseAnonKey)
     : null;
 const supabaseUrl = (supabaseConfig.supabaseUrl || '').replace(/\/+$/, '');
+const storageBucket = supabaseConfig.storageBucket || 'jerseys';
 
 function resolveImage(path) {
     if (!path) return 'https://placehold.co/600x400/0f172a/22d3ee?text=Persela+Jersey';
@@ -324,7 +325,7 @@ function resolveImage(path) {
         const normalized = path.replace(/^\/+/, '');
         const withBucket = normalized.startsWith('jerseys/')
             ? normalized
-            : `jerseys/${normalized}`;
+            : `${storageBucket}/${normalized}`;
         return `${supabaseUrl}/storage/v1/object/public/${withBucket}`;
     }
     return `/storage/jerseys/${path.replace(/^\/+/, '')}`;
