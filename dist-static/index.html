@@ -63,6 +63,8 @@
         }
     </style>
   <script defer src='/nav-mobile.js'></script>
+  <script src="/env.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.3/dist/umd/supabase.js"></script>
 </head>
 <body class="text-white" data-theme="dark">
 
@@ -392,11 +394,23 @@ const prevBtn = document.getElementById("unggulan-prev");
 const nextBtn = document.getElementById("unggulan-next");
 let autoTimer = null;
 const AUTO_DELAY = 3500;
+const supabaseConfig = window.__APP_CONFIG || {};
+const supabaseClient = (window.supabase && supabaseConfig.supabaseUrl && supabaseConfig.supabaseAnonKey)
+  ? window.supabase.createClient(supabaseConfig.supabaseUrl, supabaseConfig.supabaseAnonKey)
+  : null;
+const supabaseUrl = (supabaseConfig.supabaseUrl || '').replace(/\/+$/, '');
 
 function resolveImage(path) {
   if (!path) return 'https://placehold.co/400x300/0f172a/22d3ee?text=Persela+Jersey';
   if (path.startsWith('http') || path.startsWith('//')) return path;
-  return `/storage/jerseys/${path}`;
+  if (supabaseUrl) {
+    const normalized = path.replace(/^\/+/, '');
+    const withBucket = normalized.startsWith('jerseys/')
+      ? normalized
+      : `jerseys/${normalized}`;
+    return `${supabaseUrl}/storage/v1/object/public/${withBucket}`;
+  }
+  return `/storage/jerseys/${path.replace(/^\/+/, '')}`;
 }
 
 function scrollSlider(direction = 1) {
@@ -433,10 +447,18 @@ function stopAutoSlide() {
 
 async function loadTopProducts() {
   unggulanEl.innerHTML = '<p class="text-white/60 text-center w-full py-6">Memuat produk...</p>';
+  if (!supabaseClient) {
+    unggulanEl.innerHTML = '<p class="text-red-400 text-center w-full py-6">Supabase belum dikonfigurasi.</p>';
+    return;
+  }
   try {
-    const res = await fetch('/api/jerseys?limit=20&orderBy=created_at&sortBy=desc');
-    const data = await res.json();
-    const items = data.data || [];
+    const { data, error } = await supabaseClient
+      .from('jerseys')
+      .select('*')
+      .order('created_at', { ascending: false })
+      .limit(20);
+    if (error) throw error;
+    const items = data || [];
     if (!items.length) {
       unggulanEl.innerHTML = '<p class="text-white/60 text-center w-full py-6">Belum ada produk.</p>';
       return;

@@ -315,11 +315,19 @@ const supabaseConfig = window.__APP_CONFIG || {};
 const supabaseClient = (window.supabase && supabaseConfig.supabaseUrl && supabaseConfig.supabaseAnonKey)
     ? window.supabase.createClient(supabaseConfig.supabaseUrl, supabaseConfig.supabaseAnonKey)
     : null;
+const supabaseUrl = (supabaseConfig.supabaseUrl || '').replace(/\/+$/, '');
 
 function resolveImage(path) {
     if (!path) return 'https://placehold.co/600x400/0f172a/22d3ee?text=Persela+Jersey';
     if (path.startsWith('http') || path.startsWith('//')) return path;
-    return `/storage/jerseys/${path}`;
+    if (supabaseUrl) {
+        const normalized = path.replace(/^\/+/, '');
+        const withBucket = normalized.startsWith('jerseys/')
+            ? normalized
+            : `jerseys/${normalized}`;
+        return `${supabaseUrl}/storage/v1/object/public/${withBucket}`;
+    }
+    return `/storage/jerseys/${path.replace(/^\/+/, '')}`;
 }
 
 async function loadProduct() {
