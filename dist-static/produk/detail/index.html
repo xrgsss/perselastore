@@ -50,6 +50,8 @@
         }
     </style>
   <script defer src='/nav-mobile.js'></script>
+  <script src="/env.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.3/dist/umd/supabase.js"></script>
 </head>
 <body class="text-white" data-theme="dark">
 
@@ -309,6 +311,10 @@ const ALL_SIZES = ['XS','S','M','L','XL','XXL'];
 let selectedSize = null;
 let product = null;
 let sizeList = [];
+const supabaseConfig = window.__APP_CONFIG || {};
+const supabaseClient = (window.supabase && supabaseConfig.supabaseUrl && supabaseConfig.supabaseAnonKey)
+    ? window.supabase.createClient(supabaseConfig.supabaseUrl, supabaseConfig.supabaseAnonKey)
+    : null;
 
 function resolveImage(path) {
     if (!path) return 'https://placehold.co/600x400/0f172a/22d3ee?text=Persela+Jersey';
@@ -317,11 +323,20 @@ function resolveImage(path) {
 }
 
 async function loadProduct() {
+    if (!supabaseClient) {
+        alert('Supabase belum dikonfigurasi.');
+        return;
+    }
     try {
-        const res = await fetch(`/api/jerseys/${PRODUCT_ID}`);
-        if (!res.ok) throw new Error('Produk tidak ditemukan');
-        product = await res.json();
+        const { data, error } = await supabaseClient
+            .from('jerseys')
+            .select('*')
+            .eq('id', PRODUCT_ID)
+            .single();
+        if (error) throw error;
+        product = data;
     } catch (e) {
+        console.error(e);
         alert('Produk tidak ditemukan');
         return;
     }
@@ -348,18 +363,22 @@ async function loadProduct() {
 
 async function loadSizes(name) {
     try {
-        const res = await fetch('/api/jerseys?limit=200&search=' + encodeURIComponent(name));
-        const data = await res.json();
-        const items = (data.data || []).filter(p => p.nama === name);
-    const sizes = new Set();
-    items.forEach(p => {
-        (p.ukuran || '').split(',').map(s => s.trim()).filter(Boolean).forEach(s => sizes.add(s.toUpperCase()));
-    });
-    sizeList = Array.from(sizes).sort((a,b) => ALL_SIZES.indexOf(a) - ALL_SIZES.indexOf(b));
-  } catch (e) {
-    sizeList = (product?.ukuran || '').split(',').map(s => s.trim().toUpperCase()).filter(Boolean);
-    sizeList.sort((a,b) => ALL_SIZES.indexOf(a) - ALL_SIZES.indexOf(b));
-  }
+        if (!supabaseClient) throw new Error('Supabase client missing');
+        const { data, error } = await supabaseClient
+            .from('jerseys')
+            .select('ukuran,nama')
+            .eq('nama', name);
+        if (error) throw error;
+        const items = data || [];
+        const sizes = new Set();
+        items.forEach(p => {
+            (p.ukuran || '').split(',').map(s => s.trim()).filter(Boolean).forEach(s => sizes.add(s.toUpperCase()));
+        });
+        sizeList = Array.from(sizes).sort((a,b) => ALL_SIZES.indexOf(a) - ALL_SIZES.indexOf(b));
+    } catch (e) {
+        sizeList = (product?.ukuran || '').split(',').map(s => s.trim().toUpperCase()).filter(Boolean);
+        sizeList.sort((a,b) => ALL_SIZES.indexOf(a) - ALL_SIZES.indexOf(b));
+    }
 }
 
 function renderSizes() {

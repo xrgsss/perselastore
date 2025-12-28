@@ -50,6 +50,8 @@
         }
     </style>
   <script defer src='/nav-mobile.js'></script>
+  <script src="/env.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.3/dist/umd/supabase.js"></script>
 </head>
 <body class="text-white" data-theme="dark">
 
@@ -156,87 +158,6 @@
     </section>
 </div>
 
-@push('scripts')
-<script>
-(function(){
-    const token = localStorage.getItem('token');
-    const statusEl = document.getElementById('profileStatus');
-    const nameInput = document.getElementById('profileNameInput');
-    const emailInput = document.getElementById('profileEmailInput');
-    const passInput = document.getElementById('profilePasswordInput');
-    const saveBtn = document.getElementById('profileSaveBtn');
-    const adminEl = document.getElementById('profileAdmin');
-    const sidebarName = document.getElementById('sidebarName');
-    const sidebarEmail = document.getElementById('sidebarEmail');
-    const profileInitial = document.getElementById('profileInitial');
-
-    if (!token) {
-        statusEl.textContent = 'Silakan login untuk mengubah profil.';
-        saveBtn.disabled = true;
-        return;
-    }
-
-    const authHeader = { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' };
-
-    function setUser(data) {
-        nameInput.value = data.name || '';
-        emailInput.value = data.email || '';
-        adminEl.textContent = data.is_admin ? 'Admin' : 'User';
-        sidebarName.textContent = data.name || '-';
-        sidebarEmail.textContent = data.email || '-';
-        profileInitial.textContent = (data.name || '?').charAt(0).toUpperCase();
-    }
-
-    async function loadProfile() {
-        statusEl.textContent = 'Memuat profil...';
-        try {
-            const res = await fetch('/api/me', { headers: authHeader });
-            if (!res.ok) throw new Error('Unauthorized');
-            const data = await res.json();
-            setUser(data);
-            statusEl.textContent = '';
-        } catch (e) {
-            statusEl.textContent = 'Gagal memuat profil. Pastikan token masih aktif.';
-            saveBtn.disabled = true;
-        }
-    }
-
-    async function saveProfile() {
-        statusEl.textContent = 'Menyimpan...';
-        saveBtn.disabled = true;
-        const payload = {
-            name: nameInput.value.trim(),
-            email: emailInput.value.trim()
-        };
-        if (passInput.value) {
-            payload.password = passInput.value;
-        }
-        try {
-            const res = await fetch('/api/me', {
-                method: 'PUT',
-                headers: authHeader,
-                body: JSON.stringify(payload)
-            });
-            if (!res.ok) {
-                const txt = await res.text();
-                throw new Error(txt || 'Gagal menyimpan');
-            }
-            const data = await res.json();
-            setUser(data.user || data);
-            passInput.value = '';
-            statusEl.textContent = 'Perubahan disimpan.';
-        } catch (e) {
-            statusEl.textContent = 'Gagal menyimpan: ' + e.message;
-        } finally {
-            saveBtn.disabled = false;
-        }
-    }
-
-    saveBtn.addEventListener('click', saveProfile);
-    loadProfile();
-})();
-</script>
-@endpush
 </main>
 
 <!-- FOOTER NAV -->
@@ -384,7 +305,6 @@ function logout() {
 
 <script>
 (function(){
-    const token = localStorage.getItem('token');
     const statusEl = document.getElementById('profileStatus');
     const nameInput = document.getElementById('profileNameInput');
     const emailInput = document.getElementById('profileEmailInput');
@@ -394,34 +314,62 @@ function logout() {
     const sidebarName = document.getElementById('sidebarName');
     const sidebarEmail = document.getElementById('sidebarEmail');
     const profileInitial = document.getElementById('profileInitial');
+    const supabaseConfig = window.__APP_CONFIG || {};
+    const supabaseClient = (window.supabase && supabaseConfig.supabaseUrl && supabaseConfig.supabaseAnonKey)
+        ? window.supabase.createClient(supabaseConfig.supabaseUrl, supabaseConfig.supabaseAnonKey)
+        : null;
 
-    if (!token) {
-        statusEl.textContent = 'Silakan login untuk mengubah profil.';
+    if (!supabaseClient) {
+        statusEl.textContent = 'Supabase belum dikonfigurasi.';
         saveBtn.disabled = true;
         return;
     }
 
-    const authHeader = { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' };
+    function mapUser(user) {
+        const meta = user?.user_metadata || {};
+        const email = user?.email || '';
+        const name = meta.full_name || meta.name || email || '';
+        const isAdmin = !!(meta.is_admin || email.toLowerCase() === 'admin@gmail.com');
+        return { name, email, isAdmin };
+    }
 
-    function setUser(data) {
-        nameInput.value = data.name || '';
-        emailInput.value = data.email || '';
-        adminEl.textContent = data.is_admin ? 'Admin' : 'User';
-        sidebarName.textContent = data.name || '-';
-        sidebarEmail.textContent = data.email || '-';
-        profileInitial.textContent = (data.name || '?').charAt(0).toUpperCase();
+    function setUser(user) {
+        const u = mapUser(user);
+        nameInput.value = u.name || '';
+        emailInput.value = u.email || '';
+        adminEl.textContent = u.isAdmin ? 'Admin' : 'User';
+        sidebarName.textContent = u.name || '-';
+        sidebarEmail.textContent = u.email || '-';
+        profileInitial.textContent = (u.name || u.email || '?').charAt(0).toUpperCase();
+        // sinkronkan state lokal untuk navbar/dsb
+        if (u.email) localStorage.setItem('userEmail', u.email);
+        if (u.name) localStorage.setItem('userName', u.name);
+        localStorage.setItem('isAdmin', u.isAdmin ? 'true' : '');
     }
 
     async function loadProfile() {
         statusEl.textContent = 'Memuat profil...';
         try {
-            const res = await fetch('/api/me', { headers: authHeader });
-            if (!res.ok) throw new Error('Unauthorized');
-            const data = await res.json();
-            setUser(data);
+            // coba pakai sesi yang sudah tersimpan oleh supabase js
+            const { data, error } = await supabaseClient.auth.getUser();
+            if (error || !data?.user) throw error || new Error('Unauthorized');
+            setUser(data.user);
             statusEl.textContent = '';
         } catch (e) {
-            statusEl.textContent = 'Gagal memuat profil. Pastikan token masih aktif.';
+            // fallback: pakai token yang kita simpan manual saat login
+            const token = localStorage.getItem('token');
+            if (token) {
+                try {
+                    const { data, error } = await supabaseClient.auth.getUser(token);
+                    if (!error && data?.user) {
+                        setUser(data.user);
+                        statusEl.textContent = '';
+                        saveBtn.disabled = false;
+                        return;
+                    }
+                } catch (_) {}
+            }
+            statusEl.textContent = 'Gagal memuat profil. Silakan login ulang.';
             saveBtn.disabled = true;
         }
     }
@@ -429,27 +377,26 @@ function logout() {
     async function saveProfile() {
         statusEl.textContent = 'Menyimpan...';
         saveBtn.disabled = true;
-        const payload = {
-            name: nameInput.value.trim(),
-            email: emailInput.value.trim()
-        };
-        if (passInput.value) {
-            payload.password = passInput.value;
-        }
+        const name = nameInput.value.trim();
+        const email = emailInput.value.trim();
+        const payload = { data: { full_name: name } };
+        if (email) payload.email = email;
+        if (passInput.value) payload.password = passInput.value;
+
         try {
-            const res = await fetch('/api/me', {
-                method: 'PUT',
-                headers: authHeader,
-                body: JSON.stringify(payload)
-            });
-            if (!res.ok) {
-                const txt = await res.text();
-                throw new Error(txt || 'Gagal menyimpan');
-            }
-            const data = await res.json();
-            setUser(data.user || data);
+            const { data, error } = await supabaseClient.auth.updateUser(payload);
+            if (error) throw error;
+            setUser(data.user);
             passInput.value = '';
             statusEl.textContent = 'Perubahan disimpan.';
+            // refresh session token & header yang mungkin disimpan manual
+            const fresh = await supabaseClient.auth.getSession();
+            const access = fresh?.data?.session?.access_token;
+            if (access) {
+                localStorage.setItem('token', access);
+                localStorage.setItem('bearerToken', `Bearer ${access}`);
+                localStorage.setItem('isLogin', 'true');
+            }
         } catch (e) {
             statusEl.textContent = 'Gagal menyimpan: ' + e.message;
         } finally {
