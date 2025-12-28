@@ -50,6 +50,8 @@
         }
     </style>
   <script defer src='/nav-mobile.js'></script>
+  <script src="/env.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.3/dist/umd/supabase.js"></script>
 </head>
 <body class="text-white" data-theme="dark">
 
@@ -255,39 +257,24 @@ function logout() {
 <script>
 (() => {
     const el = document.getElementById('orders');
-    const token = localStorage.getItem('token');
     const lastOrder = JSON.parse(localStorage.getItem('lastOrder') || 'null');
+    const supabaseConfig = window.__APP_CONFIG || {};
+    const supabaseClient = (window.supabase && supabaseConfig.supabaseUrl && supabaseConfig.supabaseAnonKey)
+        ? window.supabase.createClient(supabaseConfig.supabaseUrl, supabaseConfig.supabaseAnonKey)
+        : null;
 
-    async function loadOrders() {
-        el.innerHTML = '<p class="text-white/60">Memuat pesanan...</p>';
-        if (!token) {
-            if (lastOrder) {
-                renderList([lastOrder]);
-            } else {
-                el.innerHTML = '<p class="text-white/60">Silakan login untuk melihat riwayat pesanan.</p>';
-            }
-            return;
+    function localFallback(message) {
+        if (lastOrder) {
+            renderList([lastOrder]);
+        } else {
+            el.innerHTML = `<p class="text-white/60">${message}</p>`;
         }
-        try {
-            const res = await fetch('/api/orders', {
-                headers: { 'Authorization': 'Bearer ' + token }
-            });
-            if (!res.ok) throw new Error('Gagal memuat');
-            const data = await res.json();
-            const orders = data.data || [];
-            if (!orders.length) {
-                el.innerHTML = '<p class="text-white/60">Belum ada pesanan</p>';
-                return;
-            }
-            renderList(orders);
-        } catch (e) {
-            console.error(e);
-            if (lastOrder) {
-                renderList([lastOrder]);
-            } else {
-                el.innerHTML = '<p class="text-red-400">Gagal memuat pesanan. Pastikan sudah login.</p>';
-            }
-        }
+    }
+
+    function normalizeItems(o) {
+        if (Array.isArray(o.items)) return o.items;
+        if (Array.isArray(o.order_items)) return o.order_items;
+        return [];
     }
 
     function formatDate(iso) {
@@ -307,7 +294,8 @@ function logout() {
     function renderList(orders) {
         el.innerHTML = '';
         orders.forEach(o => {
-            const items = (o.items || []).map(item => {
+            const mappedItems = normalizeItems(o);
+            const items = mappedItems.map(item => {
                 const price = (item.price || 0) * (item.qty || 0);
                 return `
                     <div class="flex justify-between bg-white/5 p-3 rounded-lg border border-white/10">
@@ -354,6 +342,73 @@ function logout() {
                 </div>
             `;
         });
+    }
+
+    async function loadOrders() {
+        el.innerHTML = '<p class="text-white/60">Memuat pesanan...</p>';
+        if (!supabaseClient) {
+            localFallback('Silakan login untuk melihat riwayat pesanan.');
+            return;
+        }
+
+        try {
+            const { data: authData, error: authErr } = await supabaseClient.auth.getUser();
+            if (authErr || !authData?.user) {
+                localFallback('Silakan login untuk melihat riwayat pesanan.');
+                return;
+            }
+            const user = authData.user;
+            const email = (user.email || '').toLowerCase();
+
+            // coba filter by user_id dulu
+            const attempts = [];
+            attempts.push(() => supabaseClient.from('orders')
+                .select('*')
+                .order('created_at', { ascending: false })
+                .eq('user_id', user.id));
+            if (email) {
+                attempts.push(() => supabaseClient.from('orders')
+                    .select('*')
+                    .order('created_at', { ascending: false })
+                    .eq('user_email', email));
+            }
+            attempts.push(() => supabaseClient.from('orders')
+                .select('*')
+                .order('created_at', { ascending: false }));
+
+            let orders = [];
+            let lastError = null;
+
+            for (const fn of attempts) {
+                try {
+                    const { data, error } = await fn();
+                    if (error) {
+                        lastError = error;
+                        continue;
+                    }
+                    if (data && data.length) {
+                        orders = data;
+                        break;
+                    }
+                    if (!data?.length) {
+                        // if query succeeded but empty, keep empty and stop trying other fallbacks
+                        orders = data || [];
+                        break;
+                    }
+                } catch (err) {
+                    lastError = err;
+                }
+            }
+
+            if (orders.length === 0) {
+                el.innerHTML = '<p class="text-white/60">Belum ada pesanan.</p>';
+                return;
+            }
+            renderList(orders);
+        } catch (e) {
+            console.error(e);
+            localFallback('Gagal memuat pesanan. Pastikan sudah login.');
+        }
     }
 
     loadOrders();

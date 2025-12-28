@@ -50,6 +50,8 @@
         }
     </style>
   <script defer src='/nav-mobile.js'></script>
+  <script src="/env.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.3/dist/umd/supabase.js"></script>
 </head>
 <body class="text-white" data-theme="dark">
 
@@ -260,6 +262,10 @@ function logout() {
 (() => {
     const ORDER_ID = window.location.pathname.split('/').filter(Boolean).pop();
     const box = document.getElementById('order-box');
+    const supabaseConfig = window.__APP_CONFIG || {};
+    const supabaseClient = (window.supabase && supabaseConfig.supabaseUrl && supabaseConfig.supabaseAnonKey)
+        ? window.supabase.createClient(supabaseConfig.supabaseUrl, supabaseConfig.supabaseAnonKey)
+        : null;
     const token = localStorage.getItem('token') || localStorage.getItem('bearerToken')?.replace(/^Bearer\\s+/,'') || '';
 
     function formatDate(iso) {
@@ -277,7 +283,8 @@ function logout() {
     }
 
     function render(order) {
-        const items = (order.items || []).map(it => {
+        const itemsArr = Array.isArray(order.items) ? order.items : Array.isArray(order.order_items) ? order.order_items : [];
+        const items = itemsArr.map(it => {
             const total = (it.price || 0) * (it.qty || 0);
             return `
                 <div class="flex justify-between bg-white/5 border border-white/10 rounded-lg px-3 py-2">
@@ -318,16 +325,24 @@ function logout() {
 
     async function load() {
         box.innerHTML = '<p class="text-white/60 text-sm">Memuat detail pesanan...</p>';
+        if (!supabaseClient) {
+            box.innerHTML = `<p class="text-red-400 text-sm">Supabase belum dikonfigurasi.</p>`;
+            return;
+        }
         try {
-            const res = await fetch(`/api/orders/${ORDER_ID}`, {
-                headers: token ? { 'Authorization': 'Bearer ' + token } : {}
-            });
-            if (!res.ok) {
-                const text = await res.text();
-                throw new Error(text || 'Gagal memuat pesanan');
+            // coba by id (UUID) langsung
+            let order = null;
+            const { data, error } = await supabaseClient
+                .from('orders')
+                .select('*')
+                .eq('id', ORDER_ID)
+                .single();
+            if (!error) order = data;
+            if (!order) {
+                box.innerHTML = `<p class="text-white/60 text-sm">Pesanan tidak ditemukan.</p>`;
+                return;
             }
-            const data = await res.json();
-            render(data.data || {});
+            render(order);
         } catch (e) {
             console.error(e);
             box.innerHTML = `<p class="text-red-400 text-sm">Gagal memuat detail pesanan.</p>`;
