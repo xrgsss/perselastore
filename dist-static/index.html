@@ -406,12 +406,12 @@ function resolveImage(path) {
   if (path.startsWith('http') || path.startsWith('//')) return path;
   if (supabaseUrl) {
     const normalized = path.replace(/^\/+/, '');
-    const withBucket = normalized.startsWith('jerseys/')
+    const withBucket = normalized.startsWith(`${storageBucket}/`)
       ? normalized
       : `${storageBucket}/${normalized}`;
     return `${supabaseUrl}/storage/v1/object/public/${withBucket}`;
   }
-  return `/storage/jerseys/${path.replace(/^\/+/, '')}`;
+  return `/storage/${storageBucket}/${path.replace(/^\/+/, '')}`;
 }
 
 function scrollSlider(direction = 1) {
